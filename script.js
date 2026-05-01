@@ -1,77 +1,98 @@
-// 1. Firebase Configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyDlBIFEJqVv5RfLNOh6POyO1hPeQ1CVRPY",
-    projectId: "nexo-0",
-    appId: "1:977099086248:web:fc05dccab20b41aee2e59d"
+  apiKey: "AIzaSyDlBIFEJqVv5RfLNOh6POyO1hPeQ1CVRPY",
+  authDomain: "nexo-0.firebaseapp.com",
+  projectId: "nexo-0",
+  storageBucket: "nexo-0.firebasestorage.app",
+  messagingSenderId: "977099086248",
+  appId: "1:977099086248:web:fc05dccab20b41aee2e59d",
+  measurementId: "G-DK9RDC3DY5"
 };
 
-// 2. Initialize Firebase
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-let currentUser = "";
 
-// 3. UI Elements
-const loginScreen = document.getElementById('login-screen');
-const passcodeInp = document.getElementById('passcode');
-const loginBtn = document.getElementById('loginBtn');
-const msgInput = document.getElementById('msgInput');
-const sendBtn = document.getElementById('sendBtn');
-const chatBox = document.getElementById('chat-box');
+document.addEventListener('DOMContentLoaded', () => {
+    
+    let currentUser = "";
 
-// 4. Login Logic
-loginBtn.addEventListener('click', () => {
-    const code = passcodeInp.value;
-    if (code === "000000") {
-        currentUser = "Tori";
-        loginScreen.style.display = 'none';
-        loadMessages();
-    } else if (code === "111111") {
-        currentUser = "Charlie";
-        loginScreen.style.display = 'none';
-        loadMessages();
-    } else {
-        alert("Access Denied");
+
+    const loginScreen = document.getElementById('login-screen');
+    const passcodeInp = document.getElementById('passcode');
+    const loginBtn = document.getElementById('loginBtn');
+    const msgInput = document.getElementById('msgInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const chatBox = document.getElementById('chat-box');
+
+
+    loginBtn.addEventListener('click', () => {
+        const code = passcodeInp.value;
+        if (code === "000000") {
+            currentUser = "Tori";
+            loginScreen.style.display = 'none';
+            loadMessages();
+        } else if (code === "111111") {
+            currentUser = "Charlie";
+            loginScreen.style.display = 'none';
+            loadMessages();
+        } else {
+            alert("Wrong passcode. Please try again.");
+            passcodeInp.value = "";
+        }
+    });
+
+
+    function sendMessage() {
+        const text = msgInput.value.trim();
+        
+        if (text === "" || !currentUser) return;
+
+
+        db.collection("messages").add({
+            user: currentUser,
+            content: text,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        })
+        .then(() => {
+            msgInput.value = ""; 
+        })
+        .catch((error) => {
+            console.error("Error sending message: ", error);
+        });
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+
+
+    msgInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+
+    // --- RECEIVE MESSAGES LOGIC ---
+    function loadMessages() {
+        // Listen to the 'messages' collection in real-time
+        db.collection("messages")
+          .orderBy("timestamp", "asc")
+          .onSnapshot((snapshot) => {
+            chatBox.innerHTML = ""; // Clear current view
+            
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const messageDiv = document.createElement('div');
+                
+                // Add base class and specific user class
+                messageDiv.classList.add('msg');
+                messageDiv.classList.add(data.user === "Tori" ? 'tori' : 'charlie');
+                
+                messageDiv.innerHTML = `<strong>${data.user}</strong><br>${data.content}`;
+                chatBox.appendChild(messageDiv);
+            });
+            
+            // Scroll to the bottom of the chat
+            chatBox.scrollTop = chatBox.scrollHeight;
+          }, (error) => {
+              console.error("Firestore Error:", error);
+          });
     }
 });
-
-// 5. Send Message Logic
-function sendMessage() {
-    const text = msgInput.value.trim();
-    if (text === "" || !currentUser) return;
-
-    db.collection("private_chat").add({
-        user: currentUser,
-        text: text,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    msgInput.value = "";
-}
-
-sendBtn.addEventListener('click', sendMessage);
-
-// Allow pressing "Enter" to send
-msgInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendMessage();
-});
-
-// 6. Listen for Real-time Messages
-function loadMessages() {
-    db.collection("private_chat")
-      .orderBy("timestamp")
-      .onSnapshot((snapshot) => {
-        chatBox.innerHTML = "";
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            const div = document.createElement('div');
-            div.classList.add('msg');
-            
-            // Assign class based on user
-            div.classList.add(data.user === "Tori" ? 'tori' : 'charlie');
-            
-            div.innerHTML = `<strong>${data.user}:</strong> ${data.text}`;
-            chatBox.appendChild(div);
-        });
-        chatBox.scrollTop = chatBox.scrollHeight;
-    });
-}
