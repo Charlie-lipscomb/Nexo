@@ -3,40 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexo</title>
+    <title>T&C Private Chat</title>
     <style>
-        /* CSS stays here so we know it loads */
-        body { font-family: sans-serif; background: #e5ddd5; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        body { font-family: -apple-system, sans-serif; background: #e5ddd5; margin: 0; display: flex; flex-direction: column; height: 100vh; }
         #login-screen { position: fixed; inset: 0; background: #075e54; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
         #chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { padding: 10px; border-radius: 10px; max-width: 70%; word-wrap: break-word; }
-        .tori { align-self: flex-start; background: white; }
+        .msg { padding: 12px; border-radius: 15px; max-width: 75%; font-size: 16px; }
+        .tori { align-self: flex-start; background: white; border: 1px solid #ccc; }
         .charlie { align-self: flex-end; background: #dcf8c6; }
-        #input-area { padding: 10px; background: #eee; display: flex; gap: 10px; }
-        input { flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #ccc; }
-        button { padding: 10px 20px; background: #25d366; color: white; border: none; border-radius: 5px; font-weight: bold; }
+        #input-area { padding: 15px; background: #f0f0f0; display: flex; gap: 10px; border-top: 1px solid #ddd; }
+        input { flex: 1; padding: 12px; border-radius: 20px; border: 1px solid #ccc; font-size: 16px; }
+        button { padding: 10px 20px; background: #25d366; color: white; border: none; border-radius: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="login-screen">
-        <h1>Private Chat</h1>
-        <input type="text" id="passcode" placeholder="Enter 6 digits" maxlength="6">
-        <button id="loginBtn">Login</button>
+        <h2>Enter Access Code</h2>
+        <input type="number" id="passcode" placeholder="000000" style="text-align:center; width: 200px;">
+        <br>
+        <button id="loginBtn">LOG IN</button>
     </div>
 
     <div id="chat-box"></div>
     
     <div id="input-area">
         <input type="text" id="msgInput" placeholder="Message...">
-        <button id="sendBtn">Send</button>
+        <button id="sendBtn">SEND</button>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
     <script>
-        // 1. YOUR CONFIG (Make sure these are filled in!)
+        // --- 1. CONFIGURATION (PASTE YOUR ACTUAL DATA HERE) ---
         const firebaseConfig = {
             apiKey: "AIzaSyDlBIFEJqVv5RfLNOh6POyO1hPeQ1CVRPY",
             authDomain: "nexo-0.firebaseapp.com",
@@ -47,32 +47,24 @@
             appId: "1:977099086248:web:fc05dccab20b41aee2e59d",
             measurementId: "G-DK9RDC3DY5"
         };
-
         // Initialize Firebase
         try {
             firebase.initializeApp(firebaseConfig);
             var db = firebase.firestore();
-            console.log("Firebase initialized");
+            alert("Firebase Linked Successfully!");
         } catch (e) {
-            alert("Firebase Setup Error: " + e.message);
+            alert("Firebase Config Error: " + e.message);
         }
 
         let currentUser = "";
 
-        // Wait for elements to exist
         window.onload = function() {
             const loginBtn = document.getElementById('loginBtn');
             const sendBtn = document.getElementById('sendBtn');
             const passcodeInp = document.getElementById('passcode');
             const msgInp = document.getElementById('msgInput');
 
-            // DEBUG: Check if buttons are found
-            if (!loginBtn || !sendBtn) {
-                alert("Critical Error: Buttons not found in HTML!");
-                return;
-            }
-
-            // LOGIN LOGIC
+            // LOGIN
             loginBtn.onclick = function() {
                 const code = passcodeInp.value;
                 if (code === "000000") {
@@ -80,15 +72,16 @@
                 } else if (code === "111111") {
                     currentUser = "Charlie";
                 } else {
-                    alert("Wrong code! Use 000000 or 111111");
+                    alert("Try 000000 or 111111");
                     return;
                 }
                 
                 document.getElementById('login-screen').style.display = 'none';
+                alert("Logged in as " + currentUser);
                 startListening();
             };
 
-            // SEND LOGIC
+            // SENDING
             sendBtn.onclick = function() {
                 const text = msgInp.value.trim();
                 if (!text) return;
@@ -97,14 +90,17 @@
                     user: currentUser,
                     content: text,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                }).then(() => {
-                    msgInp.value = "";
-                }).catch(err => {
-                    alert("Send Error: " + err.message);
+                })
+                .then(() => {
+                    msgInp.value = ""; // Clear input
+                })
+                .catch(err => {
+                    alert("FAILED TO SEND: " + err.message);
                 });
             };
         };
 
+        // REAL-TIME LISTENING
         function startListening() {
             db.collection("messages").orderBy("timestamp", "asc")
               .onSnapshot((snapshot) => {
@@ -119,7 +115,7 @@
                 });
                 chatBox.scrollTop = chatBox.scrollHeight;
             }, (err) => {
-                alert("Database Error: " + err.message);
+                alert("SYNC ERROR: " + err.message);
             });
         }
     </script>
