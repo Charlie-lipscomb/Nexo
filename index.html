@@ -276,7 +276,7 @@ addEventListener('keydown',e=>{
   if(!GS||GS.over) return;
   if(e.key.toLowerCase()==='h') startHeal();
   if(e.key.toLowerCase()==='e') activateShield();
-  if(e.key===' ') activateDash();
+  if(e.key.toLowerCase()==='f') activateDash();
   if(['1','2','3','4','5'].includes(e.key)){ selectedChar=parseInt(e.key)-1; buildCharGrid(); }
 });
 addEventListener('keyup',e=>{
